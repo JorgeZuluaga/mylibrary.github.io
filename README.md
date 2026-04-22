@@ -33,6 +33,196 @@ Detener servidor:
 make stop
 ```
 
+## Como usar este template en un repo vacio
+
+Si ya creaste un repositorio vacio en otra cuenta, este es el flujo recomendado.
+
+### 1) Clonar el repo vacio
+
+Ejemplo con HTTPS:
+
+```bash
+git clone https://github.com/TU_USUARIO/TU_REPO.git
+cd TU_REPO
+```
+
+Ejemplo con SSH:
+
+```bash
+git clone git@github.com:TU_USUARIO/TU_REPO.git
+cd TU_REPO
+```
+
+### 2) Copiar los archivos del template
+
+Desde la carpeta del repo clonado, copia el contenido de este template (excepto `.git`) al repo vacio.
+
+Ejemplo usando `rsync`:
+
+```bash
+rsync -av --exclude ".git/" /ruta/a/mylibrary.github.io/ ./
+```
+
+### 3) Confirmar que los archivos llegaron
+
+```bash
+git status
+```
+
+Debes ver archivos como:
+- `index.html`
+- `all-books.html`
+- `assets/`
+- `bin/`
+- `info/`
+- `reviews/`
+- `Makefile`
+- `README.md`
+
+### 4) Probar localmente
+
+```bash
+make start
+```
+
+Abre `http://127.0.0.1:8000` y valida que carga bien.
+
+### 5) Commit y push inicial
+
+```bash
+git add .
+git commit -m "Initialize personal library from template"
+git push -u origin main
+```
+
+### 6) Activar GitHub Pages
+
+En GitHub:
+- `Settings` -> `Pages`
+- `Deploy from a branch`
+- Branch: `main`
+- Folder: `/(root)`
+
+Importante:
+- Despues de guardar la configuracion, espera 1-2 minutos para que GitHub publique el sitio.
+- Si GitHub muestra el mensaje **"Add a Jekyll theme"**, puedes ignorarlo en este proyecto: este template es un sitio estatico y no necesita tema de Jekyll.
+
+## Publicar en GitHub Pages: dos modos
+
+Hay dos formas de publicar este template en GitHub Pages. La URL final cambia segun el modo elegido.
+
+### Modo A: sitio principal de la cuenta (raiz)
+
+URL final:
+
+```text
+https://TU_USUARIO.github.io/
+```
+
+Requisitos:
+- Tener una cuenta de GitHub.
+- Crear un repositorio con nombre exacto: `TU_USUARIO.github.io`.
+- Copiar el template en la raiz de ese repo y publicarlo.
+
+### Modo B: sitio como subdirectorio (proyecto)
+
+URL final:
+
+```text
+https://TU_USUARIO.github.io/NOMBRE_REPO/
+```
+
+Ejemplo:
+
+```text
+https://penagosolga.github.io/biblioteca/
+```
+
+En este modo:
+- Tu cuenta puede llamarse `penagosolga`.
+- Creas un repo, por ejemplo `biblioteca`.
+- El contenido del template debe copiarse en ese repo `biblioteca` (raiz del repo), no en otro.
+- Luego Pages lo publicara bajo `/biblioteca/`.
+
+Nota importante sobre `rsync`:
+- Si quieres `https://penagosolga.github.io/biblioteca/`, el `rsync` debe hacerse dentro del repo local `biblioteca/`.
+- Si haces `rsync` dentro de otro repo (por ejemplo `olgapenagos.github.io`), la URL publicada sera la de ese repo.
+
+### Que modo conviene elegir
+
+- Usa **Modo A** si quieres que esta biblioteca sea tu sitio principal de cuenta.
+- Usa **Modo B** si ya tienes un sitio principal y quieres esta biblioteca como una seccion/proyecto adicional.
+
+## Si aun no tienes cuenta en GitHub
+
+1. Ve a https://github.com/signup
+2. Crea usuario, correo y contrasena.
+3. Verifica tu correo.
+4. Inicia sesion y crea un repositorio nuevo (segun Modo A o Modo B).
+5. Clona ese repo en local y copia el template con `rsync`.
+6. Haz commit, push y activa Pages en `Settings` -> `Pages`.
+
+## Como recibir mejoras futuras del template
+
+Si alguien ya tiene su biblioteca personalizada, puede sincronizar mejoras del template sin perder sus datos.
+
+### Opcion recomendada: remoto `upstream` + merge/cherry-pick
+
+En el repo personalizado:
+
+1. Agrega este template como remoto `upstream`:
+
+```bash
+git remote add upstream https://github.com/JorgeZuluaga/mylibrary.github.io.git
+git fetch upstream
+```
+
+2. Crea una rama de actualizacion:
+
+```bash
+git checkout -b sync-template-YYYYMMDD
+```
+
+3. Trae cambios del template:
+- Merge completo:
+  ```bash
+  git merge upstream/main
+  ```
+- O solo commits puntuales:
+  ```bash
+  git cherry-pick <commit_sha>
+  ```
+
+4. Resuelve conflictos (si aparecen), prueba local y luego integra:
+
+```bash
+make start
+git checkout main
+git merge sync-template-YYYYMMDD
+git push
+```
+
+### Que archivos conviene mantener propios (normalmente NO sobrescribir)
+
+- `info/library.json`
+- `info/library-stats.json`
+- `info/book_series.json`
+- `reviews/` (si ya tienen mirrors propios)
+- Cualquier personalizacion visual/textual de su sitio
+
+### Que archivos suelen sincronizarse bien
+
+- `assets/*.js` y `assets/style.css` (mejoras de UI/UX)
+- `bin/*.py` (mejoras de scraping/procesamiento)
+- `Makefile`
+- documentacion (`README.md`, etc.)
+
+### Estrategia segura para equipos
+
+- Mantener una rama `template-sync`.
+- Hacer PR desde `template-sync` hacia `main`.
+- Revisar conflicto por conflicto antes de fusionar.
+
 ## Actualizar biblioteca desde Goodreads
 
 ### 1) Obtener la URL RSS de Goodreads
