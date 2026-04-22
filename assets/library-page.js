@@ -8,6 +8,12 @@ import { trackPageView } from "./visitor-tracker.js";
 
 const LIBRARY_JSON = "./info/library.json";
 const BOOK_SERIES_JSON = "./info/book_series.json";
+const PROFILE_CANDIDATES = [
+  "./assets/profile.jpg",
+  "./assets/profile.png",
+  "./assets/profile.webp",
+];
+const PROFILE_FALLBACK = "./assets/profile-placeholder.svg";
 
 function parseDate(dateText) {
   const raw = String(dateText ?? "").trim();
@@ -195,6 +201,23 @@ function escapeLibrary(s) {
     .replaceAll(">", "&gt;");
 }
 
+function imageExists(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = src;
+  });
+}
+
+async function resolveProfileImage() {
+  for (const candidate of PROFILE_CANDIDATES) {
+    // Load test in browser to detect if file exists.
+    if (await imageExists(candidate)) return candidate;
+  }
+  return PROFILE_FALLBACK;
+}
+
 function applyLibraryChrome(lang) {
   document.documentElement.lang = lang === "en" ? "en" : "es";
   document.title =
@@ -242,6 +265,10 @@ async function main() {
   const lang = getPageLang();
   trackPageView("library_page");
   applyLibraryChrome(lang);
+  const profileImgEl = document.querySelector(".library-identity__avatar img");
+  if (profileImgEl) {
+    profileImgEl.src = await resolveProfileImage();
+  }
   const updatedEl = document.getElementById("updated");
   if (updatedEl) {
     const dateLocale = lang === "en" ? "en-US" : "es-CO";

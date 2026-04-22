@@ -7,6 +7,12 @@ import {
 import { trackPageView } from "./visitor-tracker.js";
 
 const LIBRARY_JSON = "./info/library.json";
+const PROFILE_CANDIDATES = [
+  "./assets/profile.jpg",
+  "./assets/profile.png",
+  "./assets/profile.webp",
+];
+const PROFILE_FALLBACK = "./assets/profile-placeholder.svg";
 
 function parseDate(dateText) {
   const raw = String(dateText ?? "").trim();
@@ -28,6 +34,22 @@ function escapeLibrary(s) {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
+}
+
+function imageExists(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = src;
+  });
+}
+
+async function resolveProfileImage() {
+  for (const candidate of PROFILE_CANDIDATES) {
+    if (await imageExists(candidate)) return candidate;
+  }
+  return PROFILE_FALLBACK;
 }
 
 function renderBookList(container, items, lang) {
@@ -142,6 +164,10 @@ async function main() {
   const lang = getPageLang();
   trackPageView("library_all_page");
   applyLibraryAllChrome(lang);
+  const profileImgEl = document.querySelector(".library-identity__avatar img");
+  if (profileImgEl) {
+    profileImgEl.src = await resolveProfileImage();
+  }
 
   const res = await fetch(LIBRARY_JSON, { cache: "no-store" });
   if (!res.ok) throw new Error(`No se pudo cargar ${LIBRARY_JSON} (${res.status})`);
