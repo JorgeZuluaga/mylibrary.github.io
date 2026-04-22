@@ -17,7 +17,7 @@ SYNC_BRANCH ?= sync-template
 
 help:
 	@echo "make start|stop|dev|library-build|library-stats|reviews-all"
-	@echo "make sync-template            # full sync from template (setup+fetch+merge+auto-resolve+push)"
+	@echo "make sync-template            # force sync template into main, return to main, remove temp branch"
 
 start:
 	@echo "Starting server on http://$(HOST):$(PORT)"
@@ -53,7 +53,7 @@ reviews-force:
 
 sync-template:
 	@set -e; \
-	echo "[1/6] Configurando remoto upstream..."; \
+	echo "[1/9] Configurando remoto upstream..."; \
 	if git remote get-url upstream >/dev/null 2>&1; then \
 		git remote set-url upstream "$(TEMPLATE_UPSTREAM)"; \
 		echo "Updated upstream -> $(TEMPLATE_UPSTREAM)"; \
@@ -61,14 +61,23 @@ sync-template:
 		git remote add upstream "$(TEMPLATE_UPSTREAM)"; \
 		echo "Added upstream -> $(TEMPLATE_UPSTREAM)"; \
 	fi; \
-	echo "[2/6] Descargando cambios del template..."; \
+	echo "[2/9] Descargando cambios del template..."; \
 	git fetch upstream; \
-	echo "[3/6] Creando/actualizando rama $(SYNC_BRANCH)..."; \
+	echo "[3/9] Creando/actualizando rama temporal $(SYNC_BRANCH)..."; \
 	git checkout -B "$(SYNC_BRANCH)"; \
-	echo "[4/6] Forzando contenido exacto de upstream/$(TEMPLATE_BRANCH)..."; \
+	echo "[4/9] Forzando contenido exacto de upstream/$(TEMPLATE_BRANCH)..."; \
 	git reset --hard "upstream/$(TEMPLATE_BRANCH)"; \
-	echo "[5/6] Limpiando archivos no trackeados..."; \
+	echo "[5/9] Limpiando archivos no trackeados en $(SYNC_BRANCH)..."; \
 	git clean -fd; \
-	echo "[6/6] Subiendo rama $(SYNC_BRANCH) a origin (forzado, sin editor)..."; \
-	git push -u origin "$(SYNC_BRANCH)" --force; \
-	echo "Listo. $(SYNC_BRANCH) ahora coincide exactamente con upstream/$(TEMPLATE_BRANCH)."
+	echo "[6/9] Actualizando main con el contenido sincronizado..."; \
+	git checkout main; \
+	git reset --hard "$(SYNC_BRANCH)"; \
+	echo "[7/9] Limpiando archivos no trackeados en main..."; \
+	git clean -fd; \
+	echo "[8/9] Publicando main (forzado, sin editor)..."; \
+	git push -u origin main --force; \
+	echo "[9/9] Eliminando rama temporal $(SYNC_BRANCH)..."; \
+	git branch -D "$(SYNC_BRANCH)" 2>/dev/null || true; \
+	git push origin --delete "$(SYNC_BRANCH)" 2>/dev/null || true; \
+	echo "Listo. main ahora coincide exactamente con upstream/$(TEMPLATE_BRANCH)."; \
+	echo "Rama activa: $$(git branch --show-current)"
