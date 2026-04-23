@@ -297,6 +297,7 @@ async function main() {
   const latestReadEl = document.getElementById("library-latest-read");
   const topReviewedEl = document.getElementById("library-top-reviewed");
   const seriesReadEl = document.getElementById("library-series-read");
+  const seriesCardEl = seriesReadEl?.closest(".library-list-card");
   if (
     !titleEl ||
     !introEl ||
@@ -399,6 +400,9 @@ async function main() {
   chartEl.replaceChildren(frag);
   renderBookList(latestReadEl, latestRead, lang);
   renderBookList(topReviewedEl, topReviewedByLikes, lang);
+  if (seriesCardEl) {
+    seriesCardEl.hidden = seriesWithMatches.length === 0;
+  }
   renderSeriesList(seriesReadEl, seriesWithMatches, booksById, lang);
 }
 
