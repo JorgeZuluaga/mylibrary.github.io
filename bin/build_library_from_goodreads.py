@@ -45,6 +45,16 @@ def parse_read_date(value: str) -> str:
         return raw
 
 
+def resolve_date_read(item: ET.Element) -> str:
+    """Best-effort read date: user_read_at, then user_date_added, then item pubDate."""
+    for tag in ("user_read_at", "user_date_added", "pubDate"):
+        raw = (item.findtext(tag) or "").strip()
+        parsed = parse_read_date(raw)
+        if parsed:
+            return parsed
+    return ""
+
+
 def is_read_item(user_shelves: str, user_read_at: str, user_rating: int) -> bool:
     shelves = [s.strip().lower() for s in (user_shelves or "").split(",") if s.strip()]
     # Goodreads RSS is inconsistent across accounts:
@@ -138,7 +148,7 @@ def build_library_data(
             "bookId": book_id,
             "title": title,
             "author": author,
-            "dateRead": parse_read_date(user_read_at_raw),
+            "dateRead": resolve_date_read(item),
             "rating": rating,
             "reviewUrl": review_url if has_review else "",
             "hasReview": has_review,

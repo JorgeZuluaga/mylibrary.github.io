@@ -33,6 +33,20 @@ Stop server:
 make stop
 ```
 
+## Profile photo
+
+The library header shows an avatar. By default the template uses `assets/profile-placeholder.svg`.
+
+To use your own picture:
+
+1. Get a photo: download or export it from your camera or social profile (copy it into your project folder; a square image or one that is easy to crop works best).
+2. Save it under `assets/` as **one** of: `profile.jpg`, `profile.png`, or `profile.webp` (a single file, matching the format you chose).
+3. Open `index.html` and `all-books.html`. In the block with class `library-identity__avatar`, on the `<img>` tag, change `src` from `./assets/profile-placeholder.svg` to your file, for example `./assets/profile.jpg`.
+4. Set the `alt` text to your name or a short description.
+5. Add the file to git (`git add assets/profile.jpg`, etc.), commit, and push. After a few minutes, GitHub Pages will show the image on the live site.
+
+If you skip this step, the placeholder remains.
+
 ## How to use this template in an empty repository
 
 If you already created an empty repository in another account, this is the recommended flow.
