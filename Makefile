@@ -1,6 +1,6 @@
 .PHONY: help start dev stop \
-	library-build library-stats library-refresh \
-	reviews-first reviews-all reviews-force \
+	library-build library-update library-stats library-refresh \
+	reviews-first reviews-all reviews-force reviews-refresh \
 	sync-template
 
 PORT ?= 8000
@@ -9,14 +9,16 @@ LIBRARY_JSON ?= info/library.json
 LIBRARY_STATS_JSON ?= info/library-stats.json
 RSS_URL ?=
 COOKIE ?=
-RSS_PAGES ?= 1
-REVIEW_RSS_PAGES ?= 40
+RSS_PAGES ?= 100
+REVIEW_RSS_PAGES ?= 100
+FORCE ?= 0
 TEMPLATE_UPSTREAM ?= https://github.com/JorgeZuluaga/mylibrary.github.io.git
 TEMPLATE_BRANCH ?= main
 SYNC_BRANCH ?= sync-template
 
 help:
-	@echo "make start|stop|dev|library-build|library-stats|reviews-all"
+	@echo "make start|stop|dev|library-build|library-update|library-stats|reviews-all"
+	@echo "  library-update FORCE=0/1/2 # incremental books/likes/reviews"
 	@echo "make sync-template            # sync template files only (keeps info/, reviews/, assets/profile.*)"
 
 start:
@@ -34,7 +36,37 @@ stop:
 
 library-build:
 	@if [ -z "$(RSS_URL)" ]; then 		echo "RSS_URL is required."; 		exit 1; 	fi
-	@python3 bin/build_library_from_goodreads.py --rss-url "$(RSS_URL)" --out "$(LIBRARY_JSON)" --rss-pages "$(RSS_PAGES)" --scrape-likes --cookie "$(COOKIE)" --verbose
+	@python3 bin/build_library_from_goodreads.py --rss-url "$(RSS_URL)" --out "$(LIBRARY_JSON)" --rss-pages "$(RSS_PAGES)" --scrape-likes-mode all --cookie "$(COOKIE)" --verbose
+
+library-update:
+	@if [ -z "$(RSS_URL)" ]; then \
+		echo "RSS_URL is required."; \
+		echo "Example: make library-update RSS_URL=\"https://www.goodreads.com/review/list_rss/...\" FORCE=0"; \
+		exit 1; \
+	fi
+	@if [ "$(FORCE)" != "0" ] && [ "$(FORCE)" != "1" ] && [ "$(FORCE)" != "2" ]; then \
+		echo "FORCE must be 0, 1 or 2."; \
+		exit 1; \
+	fi
+	@LIKES_MODE="none"; \
+	if [ "$(FORCE)" = "1" ]; then LIKES_MODE="new"; fi; \
+	if [ "$(FORCE)" = "2" ]; then LIKES_MODE="all"; fi; \
+	echo "library-update: FORCE=$(FORCE) likes=$$LIKES_MODE"; \
+	python3 bin/build_library_from_goodreads.py \
+		--rss-url "$(RSS_URL)" \
+		--out "$(LIBRARY_JSON)" \
+		--rss-pages "$(RSS_PAGES)" \
+		--scrape-likes-mode "$$LIKES_MODE" \
+		--merge-from "$(LIBRARY_JSON)" \
+		--cookie "$(COOKIE)" \
+		--verbose
+	@if [ "$(FORCE)" = "2" ]; then \
+		$(MAKE) reviews-force COOKIE="$(COOKIE)" REVIEW_RSS_PAGES="$(REVIEW_RSS_PAGES)"; \
+	else \
+		$(MAKE) reviews-all COOKIE="$(COOKIE)" REVIEW_RSS_PAGES="$(REVIEW_RSS_PAGES)"; \
+	fi
+	@$(MAKE) library-stats
+	@echo "Library update completed (FORCE=$(FORCE))."
 
 library-stats:
 	@python3 bin/update_library_stats.py "$(LIBRARY_JSON)" --out "$(LIBRARY_STATS_JSON)"
@@ -50,6 +82,9 @@ reviews-all:
 
 reviews-force:
 	@python3 bin/mirror_all_reviews.py --library-json "$(LIBRARY_JSON)" --reviews-dir reviews --cookie "$(COOKIE)" --rss-pages "$(REVIEW_RSS_PAGES)" --force
+
+reviews-refresh: reviews-all library-stats
+	@echo "Reviews refresh completed."
 
 sync-template:
 	@set -e; \
