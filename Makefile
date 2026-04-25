@@ -12,6 +12,7 @@ COOKIE ?=
 RSS_PAGES ?= 100
 REVIEW_RSS_PAGES ?= 100
 FORCE ?= 0
+SITE_BASE_URL ?= https://jorgezuluaga.github.io
 TEMPLATE_UPSTREAM ?= https://github.com/JorgeZuluaga/mylibrary.github.io.git
 TEMPLATE_BRANCH ?= main
 SYNC_BRANCH ?= sync-template
@@ -75,13 +76,13 @@ library-refresh: library-build library-stats
 	@echo "Library refresh completed."
 
 reviews-first:
-	@python3 bin/mirror_first_review.py --library-json "$(LIBRARY_JSON)" --reviews-dir reviews --cookie "$(COOKIE)" --rss-pages "$(REVIEW_RSS_PAGES)"
+	@python3 bin/mirror_first_review.py --library-json "$(LIBRARY_JSON)" --reviews-dir reviews --cookie "$(COOKIE)" --rss-pages "$(REVIEW_RSS_PAGES)" --site-base-url "$(SITE_BASE_URL)"
 
 reviews-all:
-	@python3 bin/mirror_all_reviews.py --library-json "$(LIBRARY_JSON)" --reviews-dir reviews --cookie "$(COOKIE)" --rss-pages "$(REVIEW_RSS_PAGES)"
+	@python3 bin/mirror_all_reviews.py --library-json "$(LIBRARY_JSON)" --reviews-dir reviews --cookie "$(COOKIE)" --rss-pages "$(REVIEW_RSS_PAGES)" --site-base-url "$(SITE_BASE_URL)"
 
 reviews-force:
-	@python3 bin/mirror_all_reviews.py --library-json "$(LIBRARY_JSON)" --reviews-dir reviews --cookie "$(COOKIE)" --rss-pages "$(REVIEW_RSS_PAGES)" --force
+	@python3 bin/mirror_all_reviews.py --library-json "$(LIBRARY_JSON)" --reviews-dir reviews --cookie "$(COOKIE)" --rss-pages "$(REVIEW_RSS_PAGES)" --site-base-url "$(SITE_BASE_URL)" --force
 
 reviews-refresh: reviews-all library-stats
 	@echo "Reviews refresh completed."
